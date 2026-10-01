@@ -2,6 +2,8 @@
 
 An online learning platform teaching Hanafi fiqh to young, English-speaking British Muslims with little Islamic studies background. The curriculum is one path through **Nur al-Idah** by Imam Hasan al-Shurunbulali, following the book's own order. The reference edition is the Arabic text with English translation by Charkawi (commentary from Maraqi al-Falah). Every lesson cites the printed page numbers it is drawn from.
 
+Everything on the platform is completely free: courses, notes, quizzes, live classes and recordings.
+
 | Course | Book | Pages | Lessons |
 | --- | --- | --- | --- |
 | Introduction to Fiqh | Introduction | 11–25 | 5 |
@@ -24,8 +26,8 @@ Layout and structure take inspiration from SeekersGuidance Academy (tracks, leve
 | Home | Hero, the learning path through the book, featured courses, the Hanafi scale of rulings, live preview, FAQ |
 | Courses | All 8 courses (113 lessons) in the book's order |
 | Course page | Trailer video slot, modules and lessons, outcomes, the text, teacher placeholder, enrol |
-| Lesson page | Video slot, summary, key points, Arabic terms, mark complete, previous/next |
-| Notes | Reading-only version of every course: one page per course, contents list, page references, mark as read (shares progress with the video lessons) |
+| Lesson page | Video slot, summary, key points, Arabic terms, a 3 question quiz, mark complete, previous/next |
+| Notes | Reading-only version of every course: one page per course, contents list, page references, a fold-out quiz per lesson, mark as read (shares progress with the video lessons) |
 | Live | Weekly timetable (UK time) and recordings |
 | My learning | Progress across courses |
 
@@ -47,6 +49,7 @@ YouTube (including unlisted), Vimeo and direct `.mp4` links work. Each empty vid
 ## Editing content
 
 - Courses, lessons and text: `js/curriculum.js`
+- Quizzes (3 questions per lesson, keyed by lesson id): `js/quizzes.js`. `answer` is the position of the correct option counting from 0. Getting 2 of 3 right marks the lesson complete.
 - Live timetable and recordings: `js/live.js`
 - Look and feel: `css/styles.css` (colours and fonts are tokens at the top)
 
@@ -65,7 +68,5 @@ To publish free: GitHub repo Settings > Pages > deploy from branch, root folder.
 
 ## Next steps (when you outgrow static)
 
-1. Accounts and synced progress: Supabase or Firebase auth, or move content into an LMS (LearnDash, Thinkific, Teachable).
-2. Quizzes per lesson.
-3. Donations (Stripe or LaunchGood link).
-4. Teacher bios and ijazah details.
+1. Accounts and synced progress across devices: Supabase or Firebase auth (both have free tiers), or a free LMS.
+2. Teacher bios and ijazah details.

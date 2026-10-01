@@ -6,6 +6,7 @@
   const TRACKS = window.TRACKS || [];
   const TEXTS = window.TEXTS || {};
   const VIDEOS = window.VIDEOS || {};
+  const QUIZZES = window.QUIZZES || {};
   const LIVE = window.LIVE || [];
   const RECORDINGS = window.RECORDINGS || [];
   const app = document.getElementById("app");
@@ -22,8 +23,9 @@
   /* ---------- progress (stored only in this browser) ---------- */
   const STORE = "aha-progress-v1";
   function load() {
-    try { return JSON.parse(localStorage.getItem(STORE)) || { done: {}, enrolled: {} }; }
-    catch (e) { return { done: {}, enrolled: {} }; }
+    const blank = { done: {}, enrolled: {}, quiz: {} };
+    try { return Object.assign(blank, JSON.parse(localStorage.getItem(STORE)) || {}); }
+    catch (e) { return blank; }
   }
   let state = load();
   function save() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) { /* storage unavailable */ } }
@@ -84,6 +86,54 @@
     ["Haram", "حرام", "Prohibited by decisive proof.", "var(--gold)"]
   ];
 
+  /* ---------- quizzes ---------- */
+  const PASS = 2; // correct answers needed to pass a 3 question quiz
+  const picks = {};    // lesson id -> chosen option per question (this visit only)
+  const revealed = {}; // lesson id -> true once answers are checked
+  const prompts = {};  // lesson id -> message when not all questions are answered
+  const folds = {};    // lesson id -> quiz fold left open on the notes page
+  function quizBody(l) {
+    const qs = QUIZZES[l.id];
+    const mine = picks[l.id] || [];
+    const shown = !!revealed[l.id];
+    const score = qs.filter((q, n) => mine[n] === q.answer).length;
+    const best = state.quiz[l.id];
+    return `<ol class="quiz-qs">
+      ${qs.map((q, n) => `<li><fieldset ${shown ? "disabled" : ""}>
+        <legend>${n + 1}. ${esc(q.q)}</legend>
+        ${q.options.map((o, k) => {
+          const cls = shown ? (k === q.answer ? "is-right" : mine[n] === k ? "is-wrong" : "") : "";
+          return `<label class="opt ${cls}"><input type="radio" id="q-${l.id}-${n}-${k}" name="q-${l.id}-${n}" value="${k}" data-quiz-pick="${l.id}" data-q="${n}" ${mine[n] === k ? "checked" : ""}><span>${esc(o)}</span></label>`;
+        }).join("")}
+        ${shown ? `<p class="why ${mine[n] === q.answer ? "ok" : "no"}"><b>${mine[n] === q.answer ? "Correct." : "Not quite."}</b> ${esc(q.why)}</p>` : ""}
+      </fieldset></li>`).join("")}
+    </ol>
+    <div class="quiz-foot">
+      ${shown
+        ? `<p class="quiz-score"><b>${score} out of ${qs.length}.</b> ${score >= PASS ? "Well done, this lesson is marked complete." : "Read the key points again and have another go."}</p>
+           <button class="btn btn-ghost" type="button" data-quiz-retry="${l.id}">Try again</button>`
+        : `<button class="btn btn-primary" type="button" data-quiz-check="${l.id}">Check answers</button>
+           ${prompts[l.id] ? `<span class="quiz-prompt">${esc(prompts[l.id])}</span>` : ""}
+           ${best !== undefined ? `<span class="muted">Your best: ${best} out of ${qs.length}</span>` : ""}`}
+    </div>`;
+  }
+  function quizBlock(l) {
+    if (!QUIZZES[l.id]) return "";
+    return `<section class="quiz" aria-label="Lesson quiz">
+      <div class="quiz-head"><h3>Quick quiz</h3><span class="muted">${QUIZZES[l.id].length} questions · get ${PASS} right to complete the lesson</span></div>
+      ${quizBody(l)}
+    </section>`;
+  }
+  function quizFold(l) {
+    if (!QUIZZES[l.id]) return "";
+    const open = folds[l.id] || revealed[l.id] || (picks[l.id] || []).some((x) => x !== undefined);
+    const best = state.quiz[l.id];
+    return `<details class="quiz quiz-fold" data-fold="${l.id}" ${open ? "open" : ""}>
+      <summary><span>Test yourself: ${QUIZZES[l.id].length} questions</span>${best !== undefined ? `<span class="pill pill-accent">Best ${best}/${QUIZZES[l.id].length}</span>` : ""}</summary>
+      ${quizBody(l)}
+    </details>`;
+  }
+
   /* ---------- pages ---------- */
   function home() {
     const featured = ["introduction", "purification", "prayer-1"].map(courseById).filter(Boolean);
@@ -91,9 +141,9 @@
     <section class="hero">
       <div class="wrap">
         <div class="hero-copy">
-          <span class="eyebrow">Hanafi fiqh for young British Muslims</span>
+          <span class="eyebrow">Free Hanafi fiqh for young British Muslims</span>
           <h1>Learn your deen properly, one clear step at a time.</h1>
-          <p>Short video lessons and live classes in plain English, built on Nur al-Idah, the Hanafi handbook of worship that generations of Muslims started with. No background needed.</p>
+          <p>Short video lessons and live classes in plain English, built on Nur al-Idah, the Hanafi handbook of worship that generations of Muslims started with. No background needed, and completely free.</p>
           <div class="row">
             <a class="btn btn-primary" href="#course-introduction">Start the first lesson</a>
             <a class="btn btn-ghost" href="#courses">Browse courses</a>
@@ -157,7 +207,7 @@
           ["Why only the Hanafi school?", "Following one school consistently is how scholars have always taught beginners. Most British Muslims of South Asian, Turkish and Balkan heritage follow it. We respect the other three schools and mention them where it helps."],
           ["Do I need to know Arabic?", "No. Lessons are in English. Arabic chapter names are shown so you recognise them later if you continue studying."],
           ["Is this a replacement for asking a scholar?", "No. Courses teach general rulings. For your personal situation, especially in marriage, divorce and finance, ask a qualified teacher. The Friday Q&A is a good place to start."],
-          ["How much does it cost?", "Set your own pricing model here. Many academies keep core courses free and run on donations."]
+          ["How much does it cost?", "Nothing. Every course, note, quiz, live class and recording is completely free. There are no fees and no paid extras."]
         ])}
       </div>
     </div></section>`;
@@ -266,6 +316,7 @@
         ${l.terms && l.terms.length ? `<div class="stack"><h3>Terms in this lesson</h3><div class="terms">
           ${l.terms.map(([en, ar, def]) => `<div class="term"><b><span>${esc(en)}</span><span class="ar">${esc(ar)}</span></b><p>${esc(def)}</p></div>`).join("")}
         </div></div>` : ""}
+        ${quizBlock(l)}
         <p class="callout">This is a general teaching summary. For your own situation, ask a qualified teacher at the weekly <a href="#live">live Q&amp;A</a>.</p>
         <div class="row"><button class="btn ${done ? "btn-done" : "btn-primary"}" type="button" data-done="${l.id}">${done ? "Completed ✓" : "Mark as complete"}</button></div>
         <nav class="lesson-nav" aria-label="Lesson navigation">
@@ -328,6 +379,7 @@
         ${Object.values(TEXTS).map((t) => `<p><strong>${esc(t.title)}</strong> <span class="ar">${esc(t.ar)}</span><br><span class="muted">${esc(t.author)}. ${esc(t.about)}</span></p>`).join("")}
         <h3>Our approach</h3>
         <ul>
+          <li>Completely free. No fees, no paid extras, for anyone.</li>
           <li>One school, taught consistently, with respect for the other three.</li>
           <li>The book's own order: purification, prayer, funerals, fasting, zakat, Hajj.</li>
           <li>Every lesson is reviewed by a qualified teacher before it goes live.</li>
@@ -337,6 +389,11 @@
     </div></section>`;
   }
 
+  function passedLabel() {
+    const n = Object.keys(state.quiz).filter((k) => lessonIndex[k] && state.quiz[k] >= PASS).length;
+    return `${n} ${n === 1 ? "quiz" : "quizzes"} passed`;
+  }
+
   function mine() {
     const started = COURSES.filter((c) => state.enrolled[c.id] || coursePct(c) > 0);
     const doneCount = Object.keys(state.done).filter((k) => lessonIndex[k]).length;
@@ -344,7 +401,7 @@
       <div class="section-head">
         <span class="eyebrow">My learning</span>
         <h1>Your progress</h1>
-        <p>${doneCount} of ${Object.keys(lessonIndex).length} lessons complete. Progress is saved in this browser only.</p>
+        <p>${doneCount} of ${Object.keys(lessonIndex).length} lessons complete, ${passedLabel()}. Progress is saved in this browser only.</p>
       </div>
       ${started.length ? `<div class="grid">${started.map(courseCard).join("")}</div>`
         : `<div class="empty"><p>You haven't started a course yet.</p><p style="margin-top:12px"><a class="btn btn-primary" href="#course-introduction">Start with the Introduction</a></p></div>`}
@@ -411,6 +468,7 @@
             <div class="row"><span class="pill">Nur al-Idah ${esc(l.ref)}</span><span class="ar muted" style="font-size:1.15rem">${esc(l.ar)}</span></div>
             <h3>${esc(l.title)}</h3>
             ${lessonNotes(l)}
+            ${quizFold(l)}
             <div class="row">
               <button class="btn ${isDone(l.id) ? "btn-done" : "btn-ghost"}" type="button" data-done="${l.id}">${isDone(l.id) ? "Read ✓" : "Mark as read"}</button>
               ${VIDEOS[l.id] ? `<a href="#lesson-${l.id}">Watch the video</a>` : ""}
@@ -455,7 +513,31 @@
     lastHash = location.hash;
   }
 
+  app.addEventListener("toggle", (e) => {
+    if (e.target.dataset && e.target.dataset.fold) folds[e.target.dataset.fold] = e.target.open;
+  }, true);
+
+  app.addEventListener("change", (e) => {
+    const r = e.target.closest("[data-quiz-pick]");
+    if (!r) return;
+    const id = r.dataset.quizPick;
+    (picks[id] = picks[id] || [])[+r.dataset.q] = +r.value;
+    delete prompts[id];
+  });
+
   app.addEventListener("click", (e) => {
+    const qc = e.target.closest("[data-quiz-check]");
+    if (qc) {
+      const id = qc.dataset.quizCheck, qs = QUIZZES[id], mine = picks[id] || [];
+      if (qs.some((q, n) => mine[n] === undefined)) { prompts[id] = "Answer every question first."; render(); return; }
+      const score = qs.filter((q, n) => mine[n] === q.answer).length;
+      revealed[id] = true;
+      state.quiz[id] = Math.max(score, state.quiz[id] || 0);
+      if (score >= PASS && !state.done[id]) state.done[id] = Date.now();
+      save(); render(); return;
+    }
+    const qr = e.target.closest("[data-quiz-retry]");
+    if (qr) { const id = qr.dataset.quizRetry; delete picks[id]; delete revealed[id]; render(); return; }
     const j = e.target.closest("[data-jump]");
     if (j) { const t = document.getElementById("n-" + j.dataset.jump); if (t) t.scrollIntoView({ block: "start" }); return; }
     const d = e.target.closest("[data-done]");
