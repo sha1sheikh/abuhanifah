@@ -196,6 +196,7 @@
         <p class="muted" style="font-size:1.1rem">${esc(c.blurb)}</p>
         <div class="row">
           <a class="btn btn-primary" href="#lesson-${next.id}">${pct ? (pct === 100 ? "Review course" : "Continue") : "Start course"}</a>
+          <a class="btn btn-ghost" href="#notes-${c.id}">Read notes</a>
           <button class="btn ${enrolled ? "btn-done" : "btn-ghost"}" type="button" data-enrol="${c.id}">${enrolled ? "Enrolled ✓" : "Enrol"}</button>
         </div>
         <div class="facts">
@@ -251,7 +252,7 @@
     const done = isDone(l.id);
     return `<div class="wrap"><div class="lesson-layout">
       <div class="lesson-main">
-        <div class="crumbs"><a href="#courses">Courses</a> / <a href="#course-${c.id}">${esc(c.title)}</a> / Lesson ${i + 1} of ${ls.length}</div>
+        <div class="crumbs"><a href="#courses">Courses</a> / <a href="#course-${c.id}">${esc(c.title)}</a> / Lesson ${i + 1} of ${ls.length} · <a href="#notes-${c.id}">Read as notes</a></div>
         ${videoSlot(l.id, l.title)}
         <div class="stack">
           <div class="row"><span class="pill pill-accent">${l.mins} min</span><span class="pill">Nur al-Idah ${esc(l.ref)}</span><span class="ar muted" style="font-size:1.2rem">${esc(l.ar)}</span></div>
@@ -350,12 +351,87 @@
     </div></section>`;
   }
 
+  /* ---------- notes (reading only, no video) ---------- */
+  function notes() {
+    return `<section class="section"><div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Notes</span>
+        <h1>Read the notes</h1>
+        <p>Prefer reading to watching? Every course is here as written notes, one page per course, with the page numbers in Nur al-Idah so you can follow along in the book.</p>
+      </div>
+      <div class="notes-index">
+        ${COURSES.map((c) => {
+          const ls = allLessons(c);
+          const read = ls.filter((l) => isDone(l.id)).length;
+          return `<a class="notes-row" href="#notes-${c.id}">
+            <span class="pill">${esc(c.book)}</span>
+            <span class="notes-row-main"><strong>${esc(c.title)}</strong><span class="muted">${ls.length} lessons · pp. ${esc(c.pages)}${read ? ` · ${read} read` : ""}</span></span>
+            <span class="ar">${esc(c.ar)}</span>
+          </a>`;
+        }).join("")}
+      </div>
+    </div></section>`;
+  }
+
+  function lessonNotes(l) {
+    return `<div class="prose">
+        <p class="note-summary">${esc(l.summary)}</p>
+        <ul>${l.points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>
+      </div>
+      ${l.terms && l.terms.length ? `<div class="terms">
+        ${l.terms.map(([en, ar, def]) => `<div class="term"><b><span>${esc(en)}</span><span class="ar">${esc(ar)}</span></b><p>${esc(def)}</p></div>`).join("")}
+      </div>` : ""}`;
+  }
+
+  function notesCourse(id) {
+    const c = courseById(id);
+    if (!c) return notFound();
+    const ci = COURSES.indexOf(c);
+    const prevC = COURSES[ci - 1], nextC = COURSES[ci + 1];
+    let n = 0;
+    return `<div class="wrap"><div class="notes-layout">
+      <aside class="notes-toc">
+        <span class="eyebrow">Contents</span>
+        <div class="progress"><span style="width:${coursePct(c)}%"></span></div>
+        <ol>
+          ${c.modules.map((m) => `<li class="toc-module">${esc(m.title)}</li>${m.lessons.map((l) => `<li><button type="button" data-jump="${l.id}" class="${isDone(l.id) ? "is-done" : ""}">${++n}. ${esc(l.title)}</button></li>`).join("")}`).join("")}
+        </ol>
+      </aside>
+      <div class="notes-main">
+        <div class="stack">
+          <div class="crumbs"><a href="#notes">Notes</a> / ${esc(c.book)}</div>
+          <h1>${esc(c.title)}</h1>
+          <p class="ar" style="font-size:1.5rem;color:var(--accent);text-align:left">${esc(c.ar)}</p>
+          <p class="muted">${esc(c.blurb)}</p>
+          <div class="row"><span class="pill pill-accent">Nur al-Idah pp. ${esc(c.pages)}</span><a href="#course-${c.id}">Prefer video? Go to the course</a></div>
+        </div>
+        ${c.modules.map((m) => `<section class="note-module">
+          <div class="note-module-head"><h2>${esc(m.title)}</h2><span class="ar">${esc(m.ar)}</span></div>
+          ${m.lessons.map((l) => `<article class="note" id="n-${l.id}">
+            <div class="row"><span class="pill">Nur al-Idah ${esc(l.ref)}</span><span class="ar muted" style="font-size:1.15rem">${esc(l.ar)}</span></div>
+            <h3>${esc(l.title)}</h3>
+            ${lessonNotes(l)}
+            <div class="row">
+              <button class="btn ${isDone(l.id) ? "btn-done" : "btn-ghost"}" type="button" data-done="${l.id}">${isDone(l.id) ? "Read ✓" : "Mark as read"}</button>
+              ${VIDEOS[l.id] ? `<a href="#lesson-${l.id}">Watch the video</a>` : ""}
+            </div>
+          </article>`).join("")}
+        </section>`).join("")}
+        <p class="callout">These are general teaching notes. For your own situation, ask a qualified teacher at the weekly <a href="#live">live Q&amp;A</a>.</p>
+        <nav class="lesson-nav" aria-label="Course notes navigation">
+          ${prevC ? `<a class="btn btn-ghost" href="#notes-${prevC.id}">← ${esc(prevC.title)}</a>` : "<span></span>"}
+          ${nextC ? `<a class="btn btn-ghost" href="#notes-${nextC.id}">${esc(nextC.title)} →</a>` : `<a class="btn btn-ghost" href="#notes">All notes</a>`}
+        </nav>
+      </div>
+    </div></div>`;
+  }
+
   function notFound() {
     return `<section class="section"><div class="wrap"><div class="empty"><h2>Page not found</h2><p style="margin-top:12px"><a href="#home">Go to the home page</a></p></div></div></section>`;
   }
 
   /* ---------- router ---------- */
-  const ROUTES = { home, courses, live, about, my: mine };
+  const ROUTES = { home, courses, notes, live, about, my: mine };
   function render() {
     const hash = (location.hash || "#home").slice(1);
     const dash = hash.indexOf("-");
@@ -364,10 +440,11 @@
     let html;
     if (head === "course" && rest) html = course(rest);
     else if (head === "lesson" && rest) html = lesson(rest);
+    else if (head === "notes" && rest) html = notesCourse(rest);
     else if (ROUTES[hash]) html = ROUTES[hash]();
     else html = notFound();
     app.innerHTML = html;
-    const section = head === "lesson" || head === "course" ? "courses" : hash;
+    const section = head === "lesson" || head === "course" ? "courses" : head === "notes" ? "notes" : hash;
     document.querySelectorAll(".nav a").forEach((a) => a.setAttribute("aria-current", a.getAttribute("href") === "#" + section ? "page" : "false"));
   }
 
@@ -379,6 +456,8 @@
   }
 
   app.addEventListener("click", (e) => {
+    const j = e.target.closest("[data-jump]");
+    if (j) { const t = document.getElementById("n-" + j.dataset.jump); if (t) t.scrollIntoView({ block: "start" }); return; }
     const d = e.target.closest("[data-done]");
     if (d) { const id = d.dataset.done; if (state.done[id]) delete state.done[id]; else state.done[id] = Date.now(); save(); render(); return; }
     const en = e.target.closest("[data-enrol]");

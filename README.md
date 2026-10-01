@@ -25,6 +25,7 @@ Layout and structure take inspiration from SeekersGuidance Academy (tracks, leve
 | Courses | All 8 courses (113 lessons) in the book's order |
 | Course page | Trailer video slot, modules and lessons, outcomes, the text, teacher placeholder, enrol |
 | Lesson page | Video slot, summary, key points, Arabic terms, mark complete, previous/next |
+| Notes | Reading-only version of every course: one page per course, contents list, page references, mark as read (shares progress with the video lessons) |
 | Live | Weekly timetable (UK time) and recordings |
 | My learning | Progress across courses |
 
