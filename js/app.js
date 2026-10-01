@@ -64,7 +64,7 @@
     return `<a class="course-card" href="#course-${c.id}">
       <div class="course-cover"><span class="pill level">${esc(c.level)}</span><span class="ar">${esc(c.ar)}</span></div>
       <div class="course-body">
-        <span class="eyebrow">${esc(c.text ? TEXTS[c.text].title : "Orientation")}</span>
+        <span class="eyebrow">Nur al-Idah · pp. ${esc(c.pages)}</span>
         <h3>${esc(c.title)}</h3>
         <p>${esc(c.blurb)}</p>
         <div class="course-meta"><span>${n} lessons</span><span>${minsLabel(courseMins(c))}</span>${pct ? `<span>${pct}% done</span>` : ""}</div>
@@ -86,16 +86,16 @@
 
   /* ---------- pages ---------- */
   function home() {
-    const featured = ["start-fiqh", "nur-taharah", "nur-salah"].map(courseById).filter(Boolean);
+    const featured = ["introduction", "purification", "prayer-1"].map(courseById).filter(Boolean);
     return `
     <section class="hero">
       <div class="wrap">
         <div class="hero-copy">
           <span class="eyebrow">Hanafi fiqh for young British Muslims</span>
           <h1>Learn your deen properly, one clear step at a time.</h1>
-          <p>Short video lessons and live classes in plain English, built on two classical texts that generations of Muslims learnt from. No background needed.</p>
+          <p>Short video lessons and live classes in plain English, built on Nur al-Idah, the Hanafi handbook of worship that generations of Muslims started with. No background needed.</p>
           <div class="row">
-            <a class="btn btn-primary" href="#course-start-fiqh">Start the first lesson</a>
+            <a class="btn btn-primary" href="#course-introduction">Start the first lesson</a>
             <a class="btn btn-ghost" href="#courses">Browse courses</a>
           </div>
         </div>
@@ -108,18 +108,15 @@
     <section class="section"><div class="wrap">
       <div class="section-head">
         <span class="eyebrow">Your path</span>
-        <h2>Three stages, in this order</h2>
-        <p>Classical learning starts with a short text on worship before moving to a broader one. We follow the same order, so you're never studying divorce law before you can pray.</p>
+        <h2>One book, start to finish</h2>
+        <p>We follow Nur al-Idah in its own order. Purification comes first because prayer isn't valid without it, and prayer comes before everything else.</p>
       </div>
       <ol class="path">
-        ${TRACKS.map((t) => {
-          const cs = COURSES.filter((c) => c.track === t.id);
-          return `<li><div class="path-body">
-            <div class="row"><h3>${esc(t.name)}</h3><span class="pill">${esc(t.level)}</span></div>
-            <p>${esc(t.blurb)}</p>
-            <p><small>${cs.map((c) => `<a href="#course-${c.id}">${esc(c.title)}</a>`).join(" · ")}</small></p>
-          </div></li>`;
-        }).join("")}
+        ${COURSES.map((c) => `<li><div class="path-body">
+            <div class="row"><h3><a href="#course-${c.id}">${esc(c.title)}</a></h3><span class="pill">${esc(c.book)}</span></div>
+            <p>${esc(c.blurb)}</p>
+            <p><small class="muted">${allLessons(c).length} lessons · pp. ${esc(c.pages)}</small></p>
+          </div></li>`).join("")}
       </ol>
     </div></section>
 
@@ -170,23 +167,14 @@
     return items.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join("");
   }
 
-  let filters = { track: "all", level: "all" };
   function courses() {
-    const levels = [...new Set(COURSES.map((c) => c.level))];
-    const list = COURSES.filter((c) => (filters.track === "all" || c.track === filters.track) && (filters.level === "all" || c.level === filters.level));
-    const chip = (kind, val, label) => `<button class="chip" type="button" data-filter="${kind}" data-value="${esc(val)}" aria-pressed="${filters[kind] === val}">${esc(label)}</button>`;
     return `<section class="section"><div class="wrap">
       <div class="section-head">
         <span class="eyebrow">Catalogue</span>
         <h1>Courses</h1>
-        <p>${COURSES.length} courses, ${Object.keys(lessonIndex).length} lessons. Work through them in order, or jump to what you need.</p>
+        <p>${COURSES.length} courses, ${Object.keys(lessonIndex).length} lessons, covering the whole of Nur al-Idah in the book's order. Work through them in order, or jump to what you need.</p>
       </div>
-      <div class="filters" role="group" aria-label="Filter courses">
-        ${chip("track", "all", "All tracks")}${TRACKS.map((t) => chip("track", t.id, t.name)).join("")}
-        <span class="sep" aria-hidden="true"></span>
-        ${chip("level", "all", "All levels")}${levels.map((l) => chip("level", l, l)).join("")}
-      </div>
-      ${list.length ? `<div class="grid">${list.map(courseCard).join("")}</div>` : `<div class="empty">No courses match those filters.</div>`}
+      <div class="grid">${COURSES.map(courseCard).join("")}</div>
     </div></section>`;
   }
 
@@ -213,6 +201,7 @@
         <div class="facts">
           <div class="fact"><span>Lessons</span><b>${ls.length}</b></div>
           <div class="fact"><span>Video time</span><b>${minsLabel(courseMins(c))}</b></div>
+          <div class="fact"><span>Pages</span><b>${esc(c.pages)}</b></div>
           <div class="fact"><span>Progress</span><b>${pct}%</b></div>
         </div>
       </div>
@@ -228,7 +217,7 @@
             ${m.lessons.map((l) => `<a class="lesson-link ${isDone(l.id) ? "is-done" : ""}" href="#lesson-${l.id}">
               <span class="tick" aria-hidden="true">${isDone(l.id) ? "✓" : ""}</span>
               <span>${esc(l.title)}${VIDEOS[l.id] ? `<span class="vid">● video</span>` : ""}</span>
-              <small>${l.mins} min</small>
+              <small>pp. ${esc(l.ref.replace(/^pp?\. /, ""))} · ${l.mins} min</small>
             </a>`).join("")}
           </div>`).join("")}
       </div>
@@ -242,6 +231,7 @@
           <h3>${esc(t.title)}</h3>
           <p class="ar" style="font-size:1.3rem;text-align:left">${esc(t.ar)}</p>
           <p class="muted">${esc(t.author)}. ${esc(t.about)}</p>
+          <p class="muted"><small>This course: ${esc(c.book)}, pp. ${esc(c.pages)} (${esc(t.edition)}).</small></p>
         </div>` : ""}
         <div class="aside-card">
           <span class="eyebrow">Teacher</span>
@@ -264,7 +254,7 @@
         <div class="crumbs"><a href="#courses">Courses</a> / <a href="#course-${c.id}">${esc(c.title)}</a> / Lesson ${i + 1} of ${ls.length}</div>
         ${videoSlot(l.id, l.title)}
         <div class="stack">
-          <div class="row"><span class="pill pill-accent">${l.mins} min</span><span class="ar muted" style="font-size:1.2rem">${esc(l.ar)}</span></div>
+          <div class="row"><span class="pill pill-accent">${l.mins} min</span><span class="pill">Nur al-Idah ${esc(l.ref)}</span><span class="ar muted" style="font-size:1.2rem">${esc(l.ar)}</span></div>
           <h1 style="font-size:clamp(1.7rem,4vw,2.4rem)">${esc(l.title)}</h1>
         </div>
         <div class="prose">
@@ -332,13 +322,13 @@
       </div>
       <div class="prose">
         <p>Plenty of young British Muslims grew up going to mosque classes, learnt to read the Quran, and then stopped. A lot of us now pray without being sure we're doing it right, and don't know where to go to learn properly without it feeling like school again.</p>
-        <p>This academy teaches the practical rulings of Islam according to the Hanafi school, in plain English, through two texts scholars have used to teach beginners for centuries. Short recorded lessons give you the content. Weekly live classes give you a teacher.</p>
-        <h3>Our texts</h3>
+        <p>This academy teaches the practical rulings of Islam according to the Hanafi school, in plain English, through Nur al-Idah, a text scholars have used to teach beginners for centuries. Short recorded lessons give you the content. Weekly live classes give you a teacher.</p>
+        <h3>Our text</h3>
         ${Object.values(TEXTS).map((t) => `<p><strong>${esc(t.title)}</strong> <span class="ar">${esc(t.ar)}</span><br><span class="muted">${esc(t.author)}. ${esc(t.about)}</span></p>`).join("")}
         <h3>Our approach</h3>
         <ul>
           <li>One school, taught consistently, with respect for the other three.</li>
-          <li>Worship first, then family and money.</li>
+          <li>The book's own order: purification, prayer, funerals, fasting, zakat, Hajj.</li>
           <li>Every lesson is reviewed by a qualified teacher before it goes live.</li>
           <li>General teaching is not a fatwa. Personal questions go to a scholar.</li>
         </ul>
@@ -356,7 +346,7 @@
         <p>${doneCount} of ${Object.keys(lessonIndex).length} lessons complete. Progress is saved in this browser only.</p>
       </div>
       ${started.length ? `<div class="grid">${started.map(courseCard).join("")}</div>`
-        : `<div class="empty"><p>You haven't started a course yet.</p><p style="margin-top:12px"><a class="btn btn-primary" href="#course-start-fiqh">Start with Foundations</a></p></div>`}
+        : `<div class="empty"><p>You haven't started a course yet.</p><p style="margin-top:12px"><a class="btn btn-primary" href="#course-introduction">Start with the Introduction</a></p></div>`}
     </div></section>`;
   }
 
@@ -389,8 +379,6 @@
   }
 
   app.addEventListener("click", (e) => {
-    const f = e.target.closest("[data-filter]");
-    if (f) { filters[f.dataset.filter] = f.dataset.value; render(); return; }
     const d = e.target.closest("[data-done]");
     if (d) { const id = d.dataset.done; if (state.done[id]) delete state.done[id]; else state.done[id] = Date.now(); save(); render(); return; }
     const en = e.target.closest("[data-enrol]");

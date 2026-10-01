@@ -1,9 +1,19 @@
 # Abu Hanifah Academy
 
-An online learning platform teaching Hanafi fiqh to young, English-speaking British Muslims with little Islamic studies background. The curriculum is built on two classical texts:
+An online learning platform teaching Hanafi fiqh to young, English-speaking British Muslims with little Islamic studies background. The curriculum is one path through **Nur al-Idah** by Imam Hasan al-Shurunbulali, following the book's own order. The reference edition is the Arabic text with English translation by Charkawi (commentary from Maraqi al-Falah). Every lesson cites the printed page numbers it is drawn from.
 
-- **Nur al-Idah** (al-Shurunbulali): worship essentials, Level 1
-- **Mukhtasar al-Quduri** (al-Quduri): worship in depth, family, trade, food and conduct, Levels 2 to 3
+| Course | Book | Pages | Lessons |
+| --- | --- | --- | --- |
+| Introduction to Fiqh | Introduction | 11–25 | 5 |
+| Purification | Book I | 27–115 | 22 |
+| Prayer I: The Daily Prayers | Book II | 116–200 | 16 |
+| Prayer II: Witr, Voluntary and Special Prayers | Book II | 201–281 | 19 |
+| Funerals | Book III | 284–316 | 13 |
+| Fasting | Book IV | 318–371 | 15 |
+| Zakat | Book V | 376–396 | 9 |
+| Hajj and Umrah | Book VI | 398–437 | 14 |
+
+Note: in this edition the Zakat and Hajj books come from *Hibatul Fattah*, a completion of Nur al-Idah by Muhammad Muhyi al-Din Abdul Hamid (see p. 373). The course blurbs say so.
 
 Layout and structure take inspiration from SeekersGuidance Academy (tracks, levelled courses, live timetable, recordings).
 
@@ -11,8 +21,8 @@ Layout and structure take inspiration from SeekersGuidance Academy (tracks, leve
 
 | Page | What it does |
 | --- | --- |
-| Home | Hero, the three-stage learning path, featured courses, the Hanafi scale of rulings, live preview, FAQ |
-| Courses | Catalogue of 8 courses (49 lessons) with track and level filters |
+| Home | Hero, the learning path through the book, featured courses, the Hanafi scale of rulings, live preview, FAQ |
+| Courses | All 8 courses (113 lessons) in the book's order |
 | Course page | Trailer video slot, modules and lessons, outcomes, the text, teacher placeholder, enrol |
 | Lesson page | Video slot, summary, key points, Arabic terms, mark complete, previous/next |
 | Live | Weekly timetable (UK time) and recordings |
@@ -26,8 +36,8 @@ Open `js/videos.js` and add a line per lesson:
 
 ```js
 window.VIDEOS = {
-  "nur-tah-03": "https://www.youtube.com/watch?v=XXXXXXXXXXX",
-  "course:nur-salah": "https://vimeo.com/123456789",   // course trailer
+  "pur-05": "https://www.youtube.com/watch?v=XXXXXXXXXXX",
+  "course:prayer-1": "https://vimeo.com/123456789",   // course trailer
 };
 ```
 
@@ -39,7 +49,7 @@ YouTube (including unlisted), Vimeo and direct `.mp4` links work. Each empty vid
 - Live timetable and recordings: `js/live.js`
 - Look and feel: `css/styles.css` (colours and fonts are tokens at the top)
 
-**Before launch:** every lesson summary needs review and sign-off by a qualified Hanafi teacher. The content is a teaching outline, not fatwa.
+**Before launch:** every lesson summary was written from the Charkawi translation, but the OCR of the scan is imperfect in places, so each lesson needs review and sign-off by a qualified Hanafi teacher. The content is a teaching outline, not fatwa.
 
 ## Running it
 
